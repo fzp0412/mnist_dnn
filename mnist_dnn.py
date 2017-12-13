@@ -1,5 +1,10 @@
 import numpy as np
 from scipy import misc
+
+
+batch_size = 128
+epochs = 20
+
 '''
 use numpy load mnist data from mnist.npz
 '''
@@ -45,5 +50,16 @@ def loss_fun(w,x,label):
         sum_exp+=exp_fun[i]
     loss_value = np.log(exp_value[label]/sum_exp)
     return loss_value
+'''
+training function input x data 
+'''
+def training_fun(data,label,w,w_new):
+    for i in range(epochs):
+        grad_w = grad(w,x)
+        w_new = w - rate * grad_w
+        loss_value = loss_fun(w_new,data,label)
+        print(loss_value)
+     
+    
 
 (x_train, y_train), (x_test, y_test) = load_data()
