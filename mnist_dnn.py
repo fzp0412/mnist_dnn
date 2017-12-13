@@ -1,3 +1,14 @@
+import numpy as np
+from scipy import misc
+'''
+use numpy load mnist data from mnist.npz
+'''
+def load_data(path='mnist.npz'):
+    f = np.load(path)
+    x_train, y_train = f['x_train'], f['y_train']
+    x_test, y_test = f['x_test'], f['y_test']
+    f.close()
+    return (x_train, y_train), (x_test, y_test) 
 
 '''
 input initial w1 w2 w3 ...., output w1 grad,w2 grad w3 grad ....
@@ -35,3 +46,4 @@ def loss_fun(w,x,label):
     loss_value = np.log(exp_value[label]/sum_exp)
     return loss_value
 
+(x_train, y_train), (x_test, y_test) = load_data()
