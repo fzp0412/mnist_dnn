@@ -6,7 +6,7 @@ global value
 '''
 batch_size = 128
 epochs = 20
-rate =1
+rate =0.001
 num_classes = 10
 
 '''
@@ -34,15 +34,14 @@ only one photo
 all photo must sum all gradient
 '''
 def grad_fun(w,x):
-    grad_w = []
+    grad_w = np.zeros(w.shape)
     exp_value = []
-    grad_w[:] = w[:]
     sum_exp =0
     for i in range(w.shape[0]):
         exp_value.append(exp_fun(w[i],x))
         sum_exp+=exp_value[i]
     for i in range(w.shape[0]):
-        grad_w[i] =(sum_exp -exp_value[i])/sum_exp * x
+        grad_w[i] =-(sum_exp -exp_value[i])/sum_exp * x
     return grad_w
 
 '''
@@ -65,7 +64,7 @@ def loss_fun(w,x,label):
     for i in range(w.shape[0]):
         exp_value.append(exp_fun(w[i],x))
         sum_exp+=exp_value[i]
-    loss_value = np.log(exp_value[label]/sum_exp)
+    loss_value = - np.log(exp_value[label]/sum_exp)
     return loss_value
 
 '''
@@ -84,14 +83,16 @@ training function input x data
 '''
 def training_fun(data,label,w):
     loss_value = all_loss_fun(w,data,label)
+    print(loss_value)
     for i in range(epochs):
         for j in range(int(data.shape[0]/batch_size)):
             batch_data  = data[j*batch_size:(j+1)*batch_size]
             batch_label = label[j*batch_size:(j+1)*batch_size]
             grad_w = all_grad_fun(w,batch_data)
-            w_new = w - rate * grad_w
-            loss_value = all_loss_fun(w_new,data,label)
-            print(loss_value)
+            #print(grad_w)
+            w_new = w - rate/((j+1)**0.5)* grad_w
+        loss_value = all_loss_fun(w_new,data,label)
+        print(loss_value)
     return w_new
 
 (x_train, y_train), (x_test, y_test) = load_data()
@@ -102,6 +103,8 @@ x_test  = x_test.astype('float32')
 x_train /= 255
 x_test  /= 255
 
+print(x_train.shape)
+print(y_train.shape)
 w =np.random.randn(num_classes,784)
 w_new = training_fun(x_train,y_train,w)
 
