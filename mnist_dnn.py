@@ -112,6 +112,7 @@ def test_fun(data,label,w):
         i+=1
     print(right_num/sum_num)
 
+
 (x_train, y_train), (x_test, y_test) = load_data()
 x_train = x_train.reshape(60000, 784)
 x_test = x_test.reshape(10000, 784)
