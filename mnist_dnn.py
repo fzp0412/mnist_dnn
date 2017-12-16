@@ -5,8 +5,8 @@ from scipy import misc
 global value
 '''
 batch_size = 128
-epochs = 20
-rate =0.0002
+epochs = 30
+rate =0.05
 num_classes = 10
 
 '''
@@ -33,24 +33,29 @@ return grad_w.shape = (10,28*28)
 only one photo
 all photo must sum all gradient
 '''
-def grad_fun(w,x):
+def grad_fun(w,x,y):
     grad_w = np.zeros(w.shape)
+    lab = np.zeros(w.shape[0])
+    lab[y]=1
     exp_value = []
     sum_exp =0
     for i in range(w.shape[0]):
         exp_value.append(exp_fun(w[i],x))
         sum_exp+=exp_value[i]
     for i in range(w.shape[0]):
-        grad_w[i] =-(sum_exp -exp_value[i])/sum_exp * x
+        grad_w[i] =- (lab[i]*sum_exp - exp_value[i])/sum_exp * x
     return grad_w
 
 '''
 all photo gradient
 '''
-def all_grad_fun(w,data):
+def all_grad_fun(w,data,label):
     sum_grad = np.zeros(w.shape)
+    i=0
     for x in data :
-        sum_grad += grad_fun(w,x)
+        y = label[i]
+        sum_grad += grad_fun(w,x,y)
+        i+=1
     return sum_grad
 
 '''
@@ -89,7 +94,7 @@ def training_fun(data,label,w):
         for j in range(inner_size):
             batch_data  = data[j*batch_size:(j+1)*batch_size]
             batch_label = label[j*batch_size:(j+1)*batch_size]
-            grad_w = all_grad_fun(w,batch_data)
+            grad_w = all_grad_fun(w,batch_data,batch_label)
             #print(grad_w)
             w = w - rate/((i*inner_size+j+1)**0.5)* grad_w
         loss_value = all_loss_fun(w,data,label)
@@ -128,4 +133,5 @@ print("training data correct rate")
 test_fun(x_train,y_train,w_new)
 print("test data correct rate")
 test_fun(x_test,y_test,w_new)
+
 
