@@ -37,13 +37,13 @@ def grad_fun(w,x,y):
     grad_w = np.zeros(w.shape)
     lab = np.zeros(w.shape[0])
     lab[y]=1
-    exp_value = []
     sum_exp =0
-    for i in range(w.shape[0]):
-        exp_value.append(exp_fun(w[i],x))
-        sum_exp+=exp_value[i]
-    for i in range(w.shape[0]):
-        grad_w[i] =- (lab[i]*sum_exp - exp_value[i])/sum_exp * x
+    exp_value = exp_fun(w,x)
+    sum_exp = np.sum(exp_value)
+    exp_value = exp_value.reshape(exp_value.shape[0],1)
+    x =x.reshape(1,x.shape[0])
+    lab = lab.reshape(lab.shape[0],1)
+    grad_w = -(lab*sum_exp - exp_value)/sum_exp * x
     return grad_w
 
 '''
@@ -73,7 +73,10 @@ def loss_fun(w,x,label):
         exp_value.append(exp_fun(w[i],x))
         sum_exp+=exp_value[i]
     for j in range(w.shape[0]):
-        loss_value += -(lab[j]*np.log(exp_value[j]/sum_exp) +(1-lab[i])*np.log(1-exp_value[j]/sum_exp))
+        if lab[j]==1 : 
+            loss_value += -lab[j]*np.log(exp_value[j]/sum_exp)
+        else :
+            loss_value += -(1-lab[j])*np.log(1-exp_value[j]/sum_exp)
     return loss_value
 
 '''
