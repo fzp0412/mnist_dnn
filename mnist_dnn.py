@@ -5,7 +5,7 @@ from scipy import misc
 global value
 '''
 batch_size = 128
-epochs = 30
+epochs = 20
 rate =0.05
 num_classes = 10
 
@@ -66,10 +66,14 @@ all loss function must sum all value
 def loss_fun(w,x,label):
     exp_value = []
     sum_exp =0
+    lab = np.zeros(w.shape[0])
+    lab[label]=1
+    loss_value = 0
     for i in range(w.shape[0]):
         exp_value.append(exp_fun(w[i],x))
         sum_exp+=exp_value[i]
-    loss_value = - np.log(exp_value[label]/sum_exp)
+    for j in range(w.shape[0]):
+        loss_value += -(lab[j]*np.log(exp_value[j]/sum_exp) +(1-lab[i])*np.log(1-exp_value[j]/sum_exp))
     return loss_value
 
 '''
@@ -81,6 +85,7 @@ def all_loss_fun(w,data,label):
     for x in data:
         sum_loss += loss_fun(w,x,label[i])
         i+=1
+    sum_loss = sum_loss/i
     return sum_loss
 
 '''
