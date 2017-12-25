@@ -2,13 +2,32 @@ import numpy as np
 from scipy import misc
 
 '''
+three lay NN
+two hide lay
+hide 1 num = 512
+hide 2 num = 512
+hide 1 activate function relu
+hide 2 activate function relu
+relu = 0 when input <0
+relu = input when input >=0
+output lay activate function softmax
+softmax = exp(zi)/sum(exp(zi))
+
+loss funciton Cross Entropy
+L = -sum(label*ln(y)+(1-label)*ln(1-y)
+'''
+
+'''
 global value
 '''
 batch_size = 128
 epochs = 20
-rate =0.05
+rate1 =0.05
+rate2 =0.05
+rate3 =0.05
 num_classes = 10
-
+hide1_num = 512
+hide2_num = 512
 '''
 use numpy load mnist data from mnist.npz
 '''
@@ -34,6 +53,25 @@ def test_fun(data,label,w):
             right_num +=1 
         i+=1
     print(right_num/sum_num)
+'''
+calculate  delta 1
+
+delta1 = (pi(L)/pi(y))*(pi(y)/pi(z))
+'''
+def delta1_fun():
+
+
+
+'''
+calculate  delta 2
+'''
+def delta2_fun():
+
+
+'''
+calculate  delta 3
+'''
+def delta3_fun():
 
 
 (x_train, y_train), (x_test, y_test) = load_data()
