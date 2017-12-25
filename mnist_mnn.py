@@ -71,13 +71,12 @@ sum_exp_z.shape(num,10)
 y.shape(num,10)
 grad_ly.shape(num,10)
 '''
-def delta3_fun(w1,w2,w3,x,label):
-    num = x.shape[0]
-    z,y = recognition_fun(x,w1,w2,w3)
-    exp_z = np.exp(z)
+def delta3_fun(z3,y,label):
+    num = y.shape[0]
+    exp_z = np.exp(z3)
     sum_exp_z = exp_z.sum(axis=1)
-    grad_yz = np.ones(z.shape)
-    for i in range (z.shape[1]):
+    grad_yz = np.ones(z3.shape)
+    for i in range (z3.shape[1]):
         grad_yz[:,i] = exp_z[:,i]*(sum_exp_z - exp_z[:,i])/sum_exp_z/sum_exp_z
     grad_ly = (label-y)/y*(np.ones((num,num_classes))-y)
     return grad_yz * grad_yz
@@ -93,6 +92,12 @@ def delta2_fun():
 calculate  delta 1
 '''
 def delta1_fun():
+    return 0
+
+'''
+gradient delta 3
+'''
+def delta3_grad_fun(x3,delta3):
     return 0
 
 
@@ -139,8 +144,8 @@ def output_layer(x,w1,w2,w3):
     x2 = relu_fun(z1)
     z2 = np.dot(x2,w2)
     x3 = relu_fun(z2)
-    z  = np.dot(x3,w3)
-    return z
+    z3  = np.dot(x3,w3)
+    return x2,x3,z1,z2,z3
 
 '''
 last recognition function
@@ -153,13 +158,13 @@ output sum_exp_z.shape(num,1)
 output y.shape(num,10)
 '''
 def recognition_fun(x,w1,w2,w3):
-    z = output_layer(x,w1,w2,w3)
-    exp_z = np.exp(z)
+    x2,x3,z1,z2,z3 = output_layer(x,w1,w2,w3)
+    exp_z = np.exp(z3)
     sum_exp_z =exp_z.sum(axis=1)
-    y = np.ones(z.shape)
-    for i in range (z.shape[1]):
+    y = np.ones(z3.shape)
+    for i in range (z3.shape[1]):
         y[:,i] = exp_z[:,i]/sum_exp_z
-    return z,y
+    return (x2,x3,z1,z2,z3,y)
 
 
 def training_fun(data,label,w1,w2,w3):
@@ -168,7 +173,8 @@ def training_fun(data,label,w1,w2,w3):
         for j in range(inner_size):
             batch_data  = data[j*batch_size:(j+1)*batch_size]
             batch_label = label[j*batch_size:(j+1)*batch_size]
-            delta3 = delta3_fun(w1,w2,w3,batch_data,batch_label)
+            x2,x3,z1,z2,z3,y = recognition_fun(batch_data,w1,w2,w3)
+            delta3 = delta3_fun(z3,y,batch_label)
             print(delta3.shape)
     
 (x_train, y_train), (x_test, y_test) = load_data()
