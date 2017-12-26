@@ -107,11 +107,7 @@ input X when Xij<0 output 0
     else output X
 '''
 def relu_fun(x):
-    x_shape = x.shape
-    for i in range(x_shape[0]):
-        for j in range(x_shape[1]):
-            if x[i,j]<0:
-                x[i,j] = 0
+    x[x<0]=0
     return x
     
 '''
@@ -120,14 +116,7 @@ input X when Xij<0 output 0
     else output 1
 '''
 def relu_grad_fun(x):
-    x_shape = x.shape
-    for i in range(x_shape[0]):
-        for j in range(x_shape[1]):
-            if x[i,j]<0:
-                x[i,j] = 0
-            else :
-                x[i,j] = 1
-    x  = x.astype('int')
+    x[x>0]=1
     return x
     
 '''
