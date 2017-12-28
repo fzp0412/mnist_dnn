@@ -58,7 +58,7 @@ calculate  delta 3
 L = -sum(label*ln(y)+(1-label)*ln(1-y)
 
 delta3 = (pi(L)/pi(y))*(pi(y)/pi(z))
-pi(L)/pi(y) = (label - y)/y*(1-y)
+pi(L)/pi(y) = -(label - y)/y*(1-y)
 pi(y)/pi(z) = exp(zi)*(sum(exp(zi))-exp(zi))/(sum(exp(zi))^2)
 
 input w1.shape(784,512)
@@ -67,20 +67,19 @@ input w3.shape(512,10)
 input x.shape(num,784)
 input label.shape(num,10)
 z.shape(num,10)
-sum_exp_z.shape(num,10)
+sum_exp_z.shape(num,1)
 y.shape(num,10)
 grad_ly.shape(num,10)
 '''
 def delta3_fun(z3,y,label):
     num = y.shape[0]
     exp_z = np.exp(z3)
+    exp_z = exp_z.T
+    grad_yz = exp_z*(exp_z.sum(axis =0)-exp_z)/exp_z.sum(axis =0)/exp_z.sum(axis =0)
     sum_exp_z = exp_z.sum(axis=1)
-    grad_yz = np.ones(z3.shape)
-    for i in range (z3.shape[1]):
-        grad_yz[:,i] = exp_z[:,i]*(sum_exp_z - exp_z[:,i])/sum_exp_z/sum_exp_z
-    grad_ly = (label-y)/y*(np.ones((num,num_classes))-y)
-    return grad_yz * grad_yz
-
+    grad_yz =grad_yz.T 
+    grad_ly = -(label-y)/y*(np.ones((num,num_classes))-y)
+    return grad_ly * grad_yz
 
 '''
 calculate  delta 2
@@ -95,10 +94,11 @@ def delta1_fun():
     return 0
 
 '''
-gradient delta 3
+gradient w3
 '''
-def delta3_grad_fun(x3,delta3):
-    return 0
+def w3_grad_fun(x3,delta3):
+    dew3 =np.dot(x3.T,delta3) 
+    return dew3
 
 
 '''
@@ -149,12 +149,10 @@ output y.shape(num,10)
 def recognition_fun(x,w1,w2,w3):
     x2,x3,z1,z2,z3 = output_layer(x,w1,w2,w3)
     exp_z = np.exp(z3)
-    sum_exp_z =exp_z.sum(axis=1)
-    y = np.ones(z3.shape)
-    for i in range (z3.shape[1]):
-        y[:,i] = exp_z[:,i]/sum_exp_z
+    exp_z =exp_z.T
+    y = exp_z/(exp_z.sum(axis =0))
+    y=y.T
     return (x2,x3,z1,z2,z3,y)
-
 
 def training_fun(data,label,w1,w2,w3):
     inner_size = int(data.shape[0]/batch_size)
@@ -163,8 +161,11 @@ def training_fun(data,label,w1,w2,w3):
             batch_data  = data[j*batch_size:(j+1)*batch_size]
             batch_label = label[j*batch_size:(j+1)*batch_size]
             x2,x3,z1,z2,z3,y = recognition_fun(batch_data,w1,w2,w3)
+            #print(y.shape)
             delta3 = delta3_fun(z3,y,batch_label)
-            print(delta3.shape)
+            #print(delta3.shape)
+            dw3 = w3_grad_fun(x3,delta3)
+            print(dw3.shape)
     
 (x_train, y_train), (x_test, y_test) = load_data()
 x_train = x_train.reshape(60000, 784)
@@ -180,10 +181,10 @@ w3 =np.random.randn(512,10)
 w1 = w1/10
 w2 = w2/10
 w3 = w3/10
-#label = np.zeros(y_train.shape[0],num_classes)
 label = np.zeros((y_train.shape[0],num_classes))
 for i in range(y_train.shape[0]):
     label[i,y_train[i]]=1
 print(label.shape)
 
 training_fun(x_train,label,w1,w2,w3)
+
