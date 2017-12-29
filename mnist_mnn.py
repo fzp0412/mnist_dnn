@@ -22,9 +22,9 @@ global value
 '''
 batch_size = 128
 epochs = 20
-rate1 =0.0001
-rate2 =0.0001
-rate3 =0.0001
+rate1 =0.00049
+rate2 =0.00025
+rate3 =0.00010
 class_num = 10
 hide1_num = 512
 hide2_num = 256
@@ -98,7 +98,6 @@ def w_grad_fun(x,delta):
     dew =np.dot(x.T,delta) 
     return dew
 
-
 '''
 relu funciton
 input X when Xij<0 output 0
@@ -171,13 +170,16 @@ def training_fun(data,label,w1,w2,w3):
             dew2 = w_grad_fun(x2,delta2)
             delta1 = delta_fun(delta2,w2,z1)
             dew1 = w_grad_fun(batch_data,delta1)
-            w3 = w3 - rate3/((i*inner_size+j+1)**0.5)*dew3
-            w2 = w2 - rate2/((i*inner_size+j+1)**0.5)*dew2
-            w1 = w1 - rate1/((i*inner_size+j+1)**0.5)*dew1
+            w3 = w3 - rate3/(((i*inner_size*2+1))**0.5)*dew3
+            w2 = w2 - rate2/(((i*inner_size*2+1))**0.5)*dew2
+            w1 = w1 - rate1/(((i*inner_size*2+1))**0.5)*dew1
         ax2,ax3,az1,az2,az3,ay = recognition_fun(data,w1,w2,w3)
         loss = loss_fun(ay,label)
         acc = test_fun(data,y_train,az3)
         print(i+1,loss,acc)
+        #tax2,tax3,taz1,taz2,taz3,tay = recognition_fun(x_test,w1,w2,w3)
+        #tacc = test_fun(x_test,y_test,taz3)
+        #print(i+1,tacc)
     
 (x_train, y_train), (x_test, y_test) = load_data()
 x_train = x_train.reshape(60000, 784)
@@ -190,9 +192,9 @@ x_test  /= 255
 w1 =np.random.randn(784,hide1_num)
 w2 =np.random.randn(hide1_num,hide2_num)
 w3 =np.random.randn(hide2_num,class_num)
-w1 = w1/10
-w2 = w2/10
-w3 = w3/10
+w1 = w1/8
+w2 = w2/8
+w3 = w3/8
 label = np.zeros((y_train.shape[0],class_num))
 for i in range(y_train.shape[0]):
     label[i,y_train[i]]=1
