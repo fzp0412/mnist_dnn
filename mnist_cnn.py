@@ -68,9 +68,9 @@ output z.shape(num,class_num)
 '''
 def output_layer(x,filter1,filter2,w1,w2):
     z1 = cov3d_fun(x,filter1)
-    x2 = z1
+    x2 = mnn.relu_fun(z1)
     z2 = cov4d_fun(x2,filter2)
-    x3 = z2
+    x3 = mnn.relu_fun(z2)
     z3 = max_pool_fun(x3)
     x4 = flatten_fun(z3)
     z4 = np.dot(x4,w1)
