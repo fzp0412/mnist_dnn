@@ -16,7 +16,7 @@ hide1_rate   =0.00010
 filter1_size = 32
 filter2_size = 64
 class_num = 10
-hide1_num = int(filter2_size*((28-2*2)/2)**2) #9126
+hide1_num = int(filter2_size*((28-2*2)/2)**2) #9216
 hide2_num = 128
 
 '''
@@ -49,10 +49,7 @@ def cov4d_fun(x,fil):
 max pooling function
 '''
 def max_pool_fun(x):
-    z= np.zeros((x.shape[0],x.shape[1],int(x.shape[2]/2),int(x.shape[3]/2)))
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
-            z[i][j]= skimage.measure.block_reduce(x[i][j], (2,2), np.max)
+    z= skimage.measure.block_reduce(x, (1,1,2,2), np.max)
     return z
 '''
 flatten function 
@@ -100,6 +97,20 @@ def recognition_fun(x,filter1,filter2,w1,w2):
     return (x2,x3,x4,x5,z1,z2,z3,z4,z5,y)
 
 
+
+def training_fun(data,label,filter1,filter2,w1,w2):
+    inner_size = int(data.shape[0]/batch_size)
+    for i in range(epochs):
+        for j in range(inner_size):
+            batch_data  = data[j*batch_size:(j+1)*batch_size]
+            batch_label = label[j*batch_size:(j+1)*batch_size]
+            x2,x3,x4,x5,z1,z2,z3,z4,z5,y = recognition_fun(batch_data,filter1,filter2,w1,w2)
+            w2delta = mnn.delta3_fun(z5,y,batch_label)
+            w1delta = mnn.delta_fun(w2delta,w2,z4)
+            dew2 = mnn.w_grad_fun(x5,w2delta)
+            dew1 = mnn.w_grad_fun(x4,w1delta)
+
+
 (x_train, y_train), (x_test, y_test) = mnn.load_data()
 x_train = x_train.astype('float32')
 x_test  = x_test.astype('float32')
@@ -111,18 +122,15 @@ w1 = np.random.randn(hide1_num,hide2_num)
 w2 = np.random.randn(hide2_num,class_num)
 w1 = w1/100
 w2 = w2/100
+label = np.zeros((y_train.shape[0],class_num))
+for i in range(y_train.shape[0]):
+    label[i,y_train[i]]=1
 
-def training_fun(data,label,filter1,filter2,w1,w2):
-    inner_size = int(data.shape[0]/batch_size)
-    for i in range(epochs):
-        for j in range(inner_size):
-            batch_data  = data[j*batch_size:(j+1)*batch_size]
-            batch_label = label[j*batch_size:(j+1)*batch_size]
-            recognition_fun(batch_data,filter1,filter2,w1,w2)
-            print(j)
+
+
 
 s_time = int(time.time())
-training_fun(x_train,y_train,filter1,filter2,w1,w2)
+training_fun(x_train,label,filter1,filter2,w1,w2)
 e_time = int(time.time())
 print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
 
