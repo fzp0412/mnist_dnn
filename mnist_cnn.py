@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from scipy import misc
 from scipy import signal
@@ -8,7 +9,7 @@ import skimage.measure
 global value
 '''
 batch_size = 128
-epochs = 20
+epochs = 1
 filter1_rate =0.00049
 filter2_rate =0.00025
 hide1_rate   =0.00010
@@ -71,19 +72,13 @@ output z.shape(num,class_num)
 def output_layer(x,filter1,filter2,w1,w2):
     z1 = cov3d_fun(x,filter1)
     x2 = z1
-    print(x2.shape)
     z2 = cov4d_fun(x2,filter2)
     x3 = z2
-    print(x3.shape)
     z3 = max_pool_fun(x3)
-    print(z3.shape)
     x4 = flatten_fun(z3)
-    print(x4.shape)
     z4 = np.dot(x4,w1)
-    print(z4.shape)
     x5 = mnn.relu_fun(z4)
     z5 = np.dot(x5,w2)
-    print(z5.shape)
     return x2,x3,x4,x5,z1,z2,z3,z4,z5
 
 '''
@@ -116,5 +111,18 @@ w1 = np.random.randn(hide1_num,hide2_num)
 w2 = np.random.randn(hide2_num,class_num)
 w1 = w1/100
 w2 = w2/100
-recognition_fun(x_train[0:128],filter1,filter2,w1,w2)
+
+def training_fun(data,label,filter1,filter2,w1,w2):
+    inner_size = int(data.shape[0]/batch_size)
+    for i in range(epochs):
+        for j in range(inner_size):
+            batch_data  = data[j*batch_size:(j+1)*batch_size]
+            batch_label = label[j*batch_size:(j+1)*batch_size]
+            recognition_fun(batch_data,filter1,filter2,w1,w2)
+            print(j)
+
+s_time = int(time.time())
+training_fun(x_train,y_train,filter1,filter2,w1,w2)
+e_time = int(time.time())
+print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
 
