@@ -151,12 +151,19 @@ def recognition_fun(x,w1,w2,w3):
     y=y.T
     return (x2,x3,z1,z2,z3,y)
 
+'''
+loss function 
+loss = -label*log(y)+(1-label)*log(1-y)
+'''
 def loss_fun(y,label):
     one = np.ones((label.shape))
-    loss = -label*np.log(y)+(one-label)*np.log(one-y)
+    loss = -(label*np.log(y)+(one-label)*np.log(one-y))
     loss = loss.sum()/label.shape[0]
     return loss
-    
+
+'''
+triaining function
+'''
 def training_fun(data,label,w1,w2,w3,y_train):
     inner_size = int(data.shape[0]/batch_size)
     for i in range(epochs):
@@ -181,6 +188,9 @@ def training_fun(data,label,w1,w2,w3,y_train):
         #tacc = test_fun(x_test,y_test,taz3)
         #print(i+1,tacc)
 
+'''
+main function
+'''
 def run():
     (x_train, y_train), (x_test, y_test) = load_data()
     x_train = x_train.reshape(60000, 784)

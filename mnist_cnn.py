@@ -10,10 +10,10 @@ global value
 '''
 batch_size = 128
 epochs = 2
-filter1_rate =0.005
-filter2_rate =0.003
-hide1_rate   =0.002
-hide2_rate   =0.001
+filter1_rate =0.35
+filter2_rate =0.21
+hide1_rate   =0.14
+hide2_rate   =0.01
 filter1_size = 32
 filter2_size = 64
 class_num = 10
@@ -21,7 +21,7 @@ hide1_num = int(filter2_size*((28-2*2)/2)**2) #9216
 hide2_num = 128
 
 '''
-180 degree rotation function
+2d 180 degree rotation function
 '''
 def rot_fun(x):  
     z = x.reshape((x.shape[0]*x.shape[1]))[::-1].reshape((x.shape[0],x.shape[1]))
@@ -37,6 +37,8 @@ def fla_delta(delta,w,shape):
 
 '''
 mean pooling layer delta
+Kronecker product
+c = np.kron(a,b)
 '''
 def mean_pool_delta_fun(delta,n,z):
     mean = np.ones((n,n))
@@ -46,9 +48,9 @@ def mean_pool_delta_fun(delta,n,z):
     return delta_new
 
 '''
-use convolve2d to achieve convolve3d funcition
+use convolve2d to achieve forword convolve3d funcition
 '''
-def cov3d_fun(x,fil):
+def cov3d_for_fun(x,fil):
     z = np.zeros((x.shape[0],fil.shape[0],(x.shape[1]-fil.shape[1]+1),(x.shape[2]-fil.shape[2]+1)))
     for i in range(fil.shape[0]):
         for j in range(x.shape[0]):
@@ -98,6 +100,7 @@ def con_delta_fun(delta,fil,z):
                 delta_new[i][j] += signal.convolve2d(delta[i][k],fil[k][j],'full')
     delta_new = delta_new*mnn.relu_grad_fun(z)
     return delta_new
+
 '''
 max pooling function
 '''
@@ -122,13 +125,14 @@ def flatten_fun(x):
 '''
 output layer function
 input x.shape(num,784)
-input w1.shape(784,hide1_num)
-input w2.shape(hide1_num,hide2_num)
-input w3.shape(hide2_num,class_num)
+input filter1.shape(filter1_size,3,3)
+input filter1.shape(filter2_size,filter1_size,3,3)
+input w1.shape(hide1_num,hide2_num)
+input w2.shape(hide2_num,class_num)
 output z.shape(num,class_num)
 '''
 def output_layer(x,filter1,filter2,w1,w2):
-    z1 = cov3d_fun(x,filter1)
+    z1 = cov3d_for_fun(x,filter1)
     x2 = mnn.relu_fun(z1)
     z2 = cov4d_for_fun(x2,filter2)
     x3 = mnn.relu_fun(z2)
@@ -142,9 +146,10 @@ def output_layer(x,filter1,filter2,w1,w2):
 '''
 last recognition function
 input x.shape(num,784)
-input w1.shape(784,hide1_num)
-input w2.shape(hide1_num,hide2_num)
-input w3.shape(hide2_num,class_num)
+input filter1.shape(filter1_size,3,3)
+input filter1.shape(filter2_size,filter1_size,3,3)
+input w1.shape(hide1_num,hide2_num)
+input w2.shape(hide2_num,class_num)
 output z.shape(num,class_num)
 output sum_exp_z.shape(num,1)
 output y.shape(num,class_num)
@@ -157,7 +162,9 @@ def recognition_fun(x,filter1,filter2,w1,w2):
     y=y.T
     return (x2,x3,x4,x5,z1,z2,z3,z4,z5,y)
 
-
+'''
+training function
+'''
 def training_fun(data,label,filter1,filter2,w1,w2):
     inner_size = int(data.shape[0]/batch_size)
     for i in range(epochs):
@@ -178,34 +185,39 @@ def training_fun(data,label,filter1,filter2,w1,w2):
             w1 = w1 - hide1_rate/(((i*inner_size*2+1))**0.5)/batch_size*dew1
             filter2 = filter2 - filter2_rate/(((i*inner_size*2+1))**0.5)/batch_size*def2
             filter1 = filter1 - filter1_rate/(((i*inner_size*2+1))**0.5)/batch_size*def1
-            print("batch cycle = %0d" %j)
+            print("epochs = %0d,batch cycle = %0d" %(i,j))
         ax2,ax3,ax4,ax5,az1,az2,az3,az4,az5,ay = recognition_fun(data,filter1,filter2,w1,w2)
         loss = mnn.loss_fun(ay,label)
         acc = mnn.test_fun(data,y_data,az5)
         print(i+1,loss,acc)
 
+'''
+main funciton
+'''
+def run():
+    s_time = int(time.time())
+    (x_train, y_train), (x_test, y_test) = mnn.load_data()
+    x_train = x_train.astype('float32')
+    x_test  = x_test.astype('float32')
+    filter1 = np.random.randn(filter1_size,3,3)
+    filter2 = np.random.randn(filter2_size,filter1_size,3,3)
+    filter1 = filter1/100 
+    filter2 = filter2/100 
+    w1 = np.random.randn(hide1_num,hide2_num)
+    w2 = np.random.randn(hide2_num,class_num)
+    w1 = w1/100
+    w2 = w2/100
+    label = np.zeros((y_train.shape[0],class_num))
+    for i in range(y_train.shape[0]):
+        label[i,y_train[i]]=1
+    
+    x_data = x_train[0:batch_size*20]
+    l_data = label[0:batch_size*20]
+    y_data = y_train[0:batch_size*20]
+    training_fun(x_data,l_data,filter1,filter2,w1,w2)
+    e_time = int(time.time())
+    print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
 
 
-s_time = int(time.time())
-(x_train, y_train), (x_test, y_test) = mnn.load_data()
-x_train = x_train.astype('float32')
-x_test  = x_test.astype('float32')
-filter1 = np.random.randn(filter1_size,3,3)
-filter2 = np.random.randn(filter2_size,filter1_size,3,3)
-filter1 = filter1/100 
-filter2 = filter2/100 
-w1 = np.random.randn(hide1_num,hide2_num)
-w2 = np.random.randn(hide2_num,class_num)
-w1 = w1/100
-w2 = w2/100
-label = np.zeros((y_train.shape[0],class_num))
-for i in range(y_train.shape[0]):
-    label[i,y_train[i]]=1
-
-x_data = x_train[0:batch_size*10]
-l_data = label[0:batch_size*10]
-y_data = y_train[0:batch_size*10]
-training_fun(x_data,l_data,filter1,filter2,w1,w2)
-e_time = int(time.time())
-print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
-
+if __name__ =='__main__':
+    run()
