@@ -9,10 +9,11 @@ import skimage.measure
 global value
 '''
 batch_size = 128
-epochs = 1
-filter1_rate =0.00049
-filter2_rate =0.00025
-hide1_rate   =0.00010
+epochs = 2
+filter1_rate =0.005
+filter2_rate =0.003
+hide1_rate   =0.002
+hide2_rate   =0.001
 filter1_size = 32
 filter2_size = 64
 class_num = 10
@@ -22,8 +23,27 @@ hide2_num = 128
 '''
 180 degree rotation function
 '''
-def rot_fun(x):
-    return x
+def rot_fun(x):  
+    z = x.reshape((x.shape[0]*x.shape[1]))[::-1].reshape((x.shape[0],x.shape[1]))
+    return z
+
+'''
+flatten layer delta
+'''
+def fla_delta(delta,w,shape):
+    delta_new = np.dot(delta,w.T)
+    delta_new = delta_new.reshape(shape) 
+    return delta_new
+
+'''
+mean pooling layer delta
+'''
+def mean_pool_delta_fun(delta,n,z):
+    mean = np.ones((n,n))
+    mean = mean/n/n
+    delta_new = np.kron(delta,mean)
+    delta_new = delta_new*mnn.relu_grad_fun(z)
+    return delta_new
 
 '''
 use convolve2d to achieve convolve3d funcition
@@ -36,21 +56,62 @@ def cov3d_fun(x,fil):
     return z
 
 '''
-use convolve2d to achieve convolve4d funcition
+use convolve2d to achieve forword convolve4d funcition
 '''
-def cov4d_fun(x,fil):
+def cov4d_for_fun(x,fil):
     z = np.zeros((x.shape[0],fil.shape[0],(x.shape[2]-fil.shape[2]+1),(x.shape[3]-fil.shape[3]+1)))
     for i in range(fil.shape[0]):
         for j in range(x.shape[0]):
             for k in range(x.shape[1]):
                 z[j][i] += signal.convolve2d(x[j][k],rot_fun(fil[i][k]),'valid')
     return z
+
+'''
+use convolve2d to achieve back convolve3d funcition
+'''
+def cov3d_back_fun(x,delta,shape):
+    z = np.zeros((shape))
+    for i in range(shape[0]):
+        for k in range(x.shape[0]):
+            z[i] += signal.convolve2d(x[k],rot_fun(delta[k][i]),'valid')
+    return z
+
+'''
+use convolve2d to achieve back convolve4d funcition
+'''
+def cov4d_back_fun(x,delta,shape):
+    z = np.zeros((shape))
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+            for k in range(x.shape[0]):
+                z[i][j] += signal.convolve2d(x[k][j],rot_fun(delta[k][i]),'valid')
+    return z
+
+'''
+use convolve2d to achieve back delta of convolve
+'''
+def con_delta_fun(delta,fil,z):
+    delta_new = np.zeros((z.shape)) 
+    for i in range(z.shape[0]):
+        for j in range(z.shape[1]):
+            for k in range(fil.shape[0]):
+                delta_new[i][j] += signal.convolve2d(delta[i][k],fil[k][j],'full')
+    delta_new = delta_new*mnn.relu_grad_fun(z)
+    return delta_new
 '''
 max pooling function
 '''
 def max_pool_fun(x):
     z= skimage.measure.block_reduce(x, (1,1,2,2), np.max)
     return z
+
+'''
+mean pooling function
+'''
+def mean_pool_fun(x):
+    z= skimage.measure.block_reduce(x, (1,1,2,2), np.mean)
+    return z
+
 '''
 flatten function 
 '''
@@ -69,9 +130,9 @@ output z.shape(num,class_num)
 def output_layer(x,filter1,filter2,w1,w2):
     z1 = cov3d_fun(x,filter1)
     x2 = mnn.relu_fun(z1)
-    z2 = cov4d_fun(x2,filter2)
+    z2 = cov4d_for_fun(x2,filter2)
     x3 = mnn.relu_fun(z2)
-    z3 = max_pool_fun(x3)
+    z3 = mean_pool_fun(x3)
     x4 = flatten_fun(z3)
     z4 = np.dot(x4,w1)
     x5 = mnn.relu_fun(z4)
@@ -97,7 +158,6 @@ def recognition_fun(x,filter1,filter2,w1,w2):
     return (x2,x3,x4,x5,z1,z2,z3,z4,z5,y)
 
 
-
 def training_fun(data,label,filter1,filter2,w1,w2):
     inner_size = int(data.shape[0]/batch_size)
     for i in range(epochs):
@@ -105,12 +165,28 @@ def training_fun(data,label,filter1,filter2,w1,w2):
             batch_data  = data[j*batch_size:(j+1)*batch_size]
             batch_label = label[j*batch_size:(j+1)*batch_size]
             x2,x3,x4,x5,z1,z2,z3,z4,z5,y = recognition_fun(batch_data,filter1,filter2,w1,w2)
-            w2delta = mnn.delta3_fun(z5,y,batch_label)
-            w1delta = mnn.delta_fun(w2delta,w2,z4)
-            dew2 = mnn.w_grad_fun(x5,w2delta)
-            dew1 = mnn.w_grad_fun(x4,w1delta)
+            w2delta5 = mnn.delta3_fun(z5,y,batch_label)
+            w1delta4 = mnn.delta_fun(w2delta5,w2,z4)
+            delta3 = fla_delta(w1delta4,w1,z3.shape)
+            f2delta2 = mean_pool_delta_fun(delta3,2,z2)
+            f1delta1 = con_delta_fun(f2delta2,filter2,z1)
+            dew2 = mnn.w_grad_fun(x5,w2delta5)
+            dew1 = mnn.w_grad_fun(x4,w1delta4)
+            def2 = cov4d_back_fun(x2,f2delta2,filter2.shape)
+            def1 = cov3d_back_fun(batch_data,f1delta1,filter1.shape)
+            w2 = w2 - hide2_rate/(((i*inner_size*2+1))**0.5)/batch_size*dew2
+            w1 = w1 - hide1_rate/(((i*inner_size*2+1))**0.5)/batch_size*dew1
+            filter2 = filter2 - filter2_rate/(((i*inner_size*2+1))**0.5)/batch_size*def2
+            filter1 = filter1 - filter1_rate/(((i*inner_size*2+1))**0.5)/batch_size*def1
+            print("batch cycle = %0d" %j)
+        ax2,ax3,ax4,ax5,az1,az2,az3,az4,az5,ay = recognition_fun(data,filter1,filter2,w1,w2)
+        loss = mnn.loss_fun(ay,label)
+        acc = mnn.test_fun(data,y_data,az5)
+        print(i+1,loss,acc)
 
 
+
+s_time = int(time.time())
 (x_train, y_train), (x_test, y_test) = mnn.load_data()
 x_train = x_train.astype('float32')
 x_test  = x_test.astype('float32')
@@ -126,11 +202,10 @@ label = np.zeros((y_train.shape[0],class_num))
 for i in range(y_train.shape[0]):
     label[i,y_train[i]]=1
 
-
-
-
-s_time = int(time.time())
-training_fun(x_train,label,filter1,filter2,w1,w2)
+x_data = x_train[0:batch_size*10]
+l_data = label[0:batch_size*10]
+y_data = y_train[0:batch_size*10]
+training_fun(x_data,l_data,filter1,filter2,w1,w2)
 e_time = int(time.time())
 print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
 
