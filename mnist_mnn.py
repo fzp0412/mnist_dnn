@@ -173,9 +173,9 @@ def training_fun(data,label,w1,w2,w3,y_train):
             x2,x3,z1,z2,z3,y = recognition_fun(batch_data,w1,w2,w3)
             delta3 = delta3_fun(z3,y,batch_label)
             dew3 = w_grad_fun(x3,delta3)
-            delta2 = delta_fun(delta3,w3,z2)
+            delta2 = delta_fun(delta3,w3,x3)
             dew2 = w_grad_fun(x2,delta2)
-            delta1 = delta_fun(delta2,w2,z1)
+            delta1 = delta_fun(delta2,w2,x2)
             dew1 = w_grad_fun(batch_data,delta1)
             w3 = w3 - rate3/(((i*inner_size*2+1))**0.5)/batch_size*dew3
             w2 = w2 - rate2/(((i*inner_size*2+1))**0.5)/batch_size*dew2

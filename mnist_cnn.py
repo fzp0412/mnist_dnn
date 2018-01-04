@@ -9,11 +9,11 @@ import skimage.measure
 global value
 '''
 batch_size = 128
-epochs = 2
-filter1_rate =0.2
-filter2_rate =0.15
-hide1_rate   =0.10
-hide2_rate   =0.05
+epochs = 4
+filter1_rate =0.25
+filter2_rate =0.2
+hide1_rate   =0.15
+hide2_rate   =0.1
 filter1_size = 32
 filter2_size = 64
 class_num = 10
@@ -173,10 +173,10 @@ def training_fun(data,label,y_data,filter1,filter2,w1,w2):
             batch_label = label[j*batch_size:(j+1)*batch_size]
             x2,x3,x4,x5,z1,z2,z3,z4,z5,y = recognition_fun(batch_data,filter1,filter2,w1,w2)
             w2delta5 = mnn.delta3_fun(z5,y,batch_label)
-            w1delta4 = mnn.delta_fun(w2delta5,w2,z4)
+            w1delta4 = mnn.delta_fun(w2delta5,w2,x5)
             delta3 = fla_delta(w1delta4,w1,z3.shape)
-            f2delta2 = mean_pool_delta_fun(delta3,2,z2)
-            f1delta1 = con_delta_fun(f2delta2,filter2,z1)
+            f2delta2 = mean_pool_delta_fun(delta3,2,x3)
+            f1delta1 = con_delta_fun(f2delta2,filter2,x2)
             dew2 = mnn.w_grad_fun(x5,w2delta5)
             dew1 = mnn.w_grad_fun(x4,w1delta4)
             def2 = cov4d_back_fun(x2,f2delta2,filter2.shape)
