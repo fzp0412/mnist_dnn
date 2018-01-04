@@ -164,7 +164,7 @@ def loss_fun(y,label):
 '''
 triaining function
 '''
-def training_fun(data,label,w1,w2,w3,y_train):
+def training_fun(data,label,w1,w2,w3,y_train,x_test,y_test):
     inner_size = int(data.shape[0]/batch_size)
     for i in range(epochs):
         for j in range(inner_size):
@@ -210,7 +210,7 @@ def run():
     for i in range(y_train.shape[0]):
         label[i,y_train[i]]=1
     print(label.shape)
-    training_fun(x_train,label,w1,w2,w3,y_train)
+    training_fun(x_train,label,w1,w2,w3,y_train,x_test,y_test)
 
 if __name__ =='__main__':
     run()
