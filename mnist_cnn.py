@@ -190,6 +190,16 @@ def training_fun(data,label,y_data,filter1,filter2,w1,w2):
         loss = mnn.loss_fun(ay,label)
         acc = mnn.test_fun(data,y_data,az5)
         print(i+1,loss,acc)
+    return filter1,filter2,w1,w2
+
+'''
+test function
+'''
+def test_fun(x_test,y_test,filter1,filter2,w1,w2):
+    tax2,tax3,tax4,tax5,taz1,taz2,taz3,taz4,taz5 = output_layer(x_test,filter1,filter2,w1,w2)
+    acc = mnn.test_fun(x_test,y_test,taz5)
+    print(acc)
+
 
 '''
 main funciton
@@ -214,7 +224,8 @@ def run():
     x_data = x_train[0:batch_size*20]
     l_data = label[0:batch_size*20]
     y_data = y_train[0:batch_size*20]
-    training_fun(x_data,l_data,y_data,filter1,filter2,w1,w2)
+    filter1,filter2,w1,w2 = training_fun(x_data,l_data,y_data,filter1,filter2,w1,w2)
+    test_fun(x_test[0:1000],y_test[0:1000],filter1,filter2,w1,w2)
     e_time = int(time.time())
     print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
 

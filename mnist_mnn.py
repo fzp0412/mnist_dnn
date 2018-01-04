@@ -184,9 +184,9 @@ def training_fun(data,label,w1,w2,w3,y_train):
         loss = loss_fun(ay,label)
         acc = test_fun(data,y_train,az3)
         print(i+1,loss,acc)
-        #tax2,tax3,taz1,taz2,taz3,tay = recognition_fun(x_test,w1,w2,w3)
-        #tacc = test_fun(x_test,y_test,taz3)
-        #print(i+1,tacc)
+    tax2,tax3,taz1,taz2,taz3,tay = recognition_fun(x_test,w1,w2,w3)
+    tacc = test_fun(x_test,y_test,taz3)
+    print(i+1,tacc)
 
 '''
 main function
