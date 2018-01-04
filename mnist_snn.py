@@ -6,7 +6,7 @@ global value
 '''
 batch_size = 128
 epochs = 20
-rate =0.05
+rate =5
 num_classes = 10
 
 '''
@@ -104,7 +104,7 @@ def training_fun(data,label,w):
             batch_label = label[j*batch_size:(j+1)*batch_size]
             grad_w = all_grad_fun(w,batch_data,batch_label)
             #print(grad_w)
-            w = w - rate/((i*inner_size+j+1)**0.5)* grad_w
+            w = w - rate/((i*inner_size+j+1)**0.5)/batch_size* grad_w
         loss_value = all_loss_fun(w,data,label)
         print(i+1,loss_value)
     return w
@@ -125,21 +125,25 @@ def test_fun(data,label,w):
         i+=1
     print(right_num/sum_num)
 
+'''
+main function
+'''
+def run():
+    (x_train, y_train), (x_test, y_test) = load_data()
+    x_train = x_train.reshape(60000, 784)
+    x_test = x_test.reshape(10000, 784)
+    x_train = x_train.astype('float32')
+    x_test  = x_test.astype('float32')
+    x_train /= 255
+    x_test  /= 255
+    w =np.random.randn(num_classes,784)
+    w = w/10
+    w_new = training_fun(x_train,y_train,w)
+    
+    print("training data correct rate")
+    test_fun(x_train,y_train,w_new)
+    print("test data correct rate")
+    test_fun(x_test,y_test,w_new)
 
-(x_train, y_train), (x_test, y_test) = load_data()
-x_train = x_train.reshape(60000, 784)
-x_test = x_test.reshape(10000, 784)
-x_train = x_train.astype('float32')
-x_test  = x_test.astype('float32')
-x_train /= 255
-x_test  /= 255
-w =np.random.randn(num_classes,784)
-w = w/10
-w_new = training_fun(x_train,y_train,w)
-
-print("training data correct rate")
-test_fun(x_train,y_train,w_new)
-print("test data correct rate")
-test_fun(x_test,y_test,w_new)
-
-
+if __name__ =='__main__':
+    run()

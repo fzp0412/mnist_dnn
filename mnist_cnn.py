@@ -10,10 +10,10 @@ global value
 '''
 batch_size = 128
 epochs = 2
-filter1_rate =0.35
-filter2_rate =0.21
-hide1_rate   =0.14
-hide2_rate   =0.01
+filter1_rate =0.2
+filter2_rate =0.15
+hide1_rate   =0.10
+hide2_rate   =0.05
 filter1_size = 32
 filter2_size = 64
 class_num = 10
@@ -165,7 +165,7 @@ def recognition_fun(x,filter1,filter2,w1,w2):
 '''
 training function
 '''
-def training_fun(data,label,filter1,filter2,w1,w2):
+def training_fun(data,label,y_data,filter1,filter2,w1,w2):
     inner_size = int(data.shape[0]/batch_size)
     for i in range(epochs):
         for j in range(inner_size):
@@ -214,7 +214,7 @@ def run():
     x_data = x_train[0:batch_size*20]
     l_data = label[0:batch_size*20]
     y_data = y_train[0:batch_size*20]
-    training_fun(x_data,l_data,filter1,filter2,w1,w2)
+    training_fun(x_data,l_data,y_data,filter1,filter2,w1,w2)
     e_time = int(time.time())
     print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
 

@@ -22,9 +22,9 @@ global value
 '''
 batch_size = 128
 epochs = 20
-rate1 =0.00049
-rate2 =0.00025
-rate3 =0.00010
+rate1 =0.06
+rate2 =0.035
+rate3 =0.015
 class_num = 10
 hide1_num = 512
 hide2_num = 256
@@ -177,9 +177,9 @@ def training_fun(data,label,w1,w2,w3,y_train):
             dew2 = w_grad_fun(x2,delta2)
             delta1 = delta_fun(delta2,w2,z1)
             dew1 = w_grad_fun(batch_data,delta1)
-            w3 = w3 - rate3/(((i*inner_size*2+1))**0.5)*dew3
-            w2 = w2 - rate2/(((i*inner_size*2+1))**0.5)*dew2
-            w1 = w1 - rate1/(((i*inner_size*2+1))**0.5)*dew1
+            w3 = w3 - rate3/(((i*inner_size*2+1))**0.5)/batch_size*dew3
+            w2 = w2 - rate2/(((i*inner_size*2+1))**0.5)/batch_size*dew2
+            w1 = w1 - rate1/(((i*inner_size*2+1))**0.5)/batch_size*dew1
         ax2,ax3,az1,az2,az3,ay = recognition_fun(data,w1,w2,w3)
         loss = loss_fun(ay,label)
         acc = test_fun(data,y_train,az3)
