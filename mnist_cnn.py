@@ -52,9 +52,10 @@ max pooling layer delta
 Kronecker product
 c = np.kron(a,b)
 '''
-def max_pool_delta_fun(delta,z,max_sit):
-    delta_new = np.kron(delta,max_sit)
-    delta_new = delta_new*mnn.relu_grad_fun(z)
+def max_pool_delta_fun(delta,n,z,max_sit):
+    one = np.ones((n,n))
+    delta_new = np.kron(delta,one)
+    delta_new = delta_new*max_sit*mnn.relu_grad_fun(z)
     return delta_new
 '''
 use convolve2d to achieve forword convolve3d funcition
