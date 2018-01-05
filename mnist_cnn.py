@@ -10,10 +10,10 @@ global value
 '''
 batch_size = 128
 epochs = 4
-filter1_rate =0.25
-filter2_rate =0.2
-hide1_rate   =0.15
-hide2_rate   =0.1
+filter1_rate =0.1
+filter2_rate =0.08
+hide1_rate   =0.05
+hide2_rate   =0.02
 filter1_size = 32
 filter2_size = 64
 class_num = 10
@@ -47,6 +47,15 @@ def mean_pool_delta_fun(delta,n,z):
     delta_new = delta_new*mnn.relu_grad_fun(z)
     return delta_new
 
+'''
+max pooling layer delta
+Kronecker product
+c = np.kron(a,b)
+'''
+def max_pool_delta_fun(delta,z,max_sit):
+    delta_new = np.kron(delta,max_sit)
+    delta_new = delta_new*mnn.relu_grad_fun(z)
+    return delta_new
 '''
 use convolve2d to achieve forword convolve3d funcition
 '''
@@ -106,7 +115,12 @@ max pooling function
 '''
 def max_pool_fun(x):
     z= skimage.measure.block_reduce(x, (1,1,2,2), np.max)
-    return z
+    z1 = np.ones((x.shape[0],x.shape[1],2,2))
+    z_sit = np.kron(z,z1)
+    x -= z_sit
+    x[x==0]=1
+    x[x<0]=0
+    return z,x
 
 '''
 mean pooling function
@@ -163,6 +177,25 @@ def recognition_fun(x,filter1,filter2,w1,w2):
     return (x2,x3,x4,x5,z1,z2,z3,z4,z5,y)
 
 '''
+loss function and accurate function
+'''
+def loss_and_acc_fun(data,label,y_data,filter1,filter2,w1,w2,batch_size,loss_bool=0):
+    inner_size = int(data.shape[0]/batch_size)
+    loss = 0
+    acc  = 0 
+    for i in range(inner_size):
+        batch_data  = data[i*batch_size:(i+1)*batch_size]
+        batch_y     = y_data[i*batch_size:(i+1)*batch_size]
+        x2,x3,x4,x5,z1,z2,z3,z4,z5,y = recognition_fun(batch_data,filter1,filter2,w1,w2)
+        acc  += mnn.test_fun(batch_data,batch_y,z5)
+        if loss_bool ==1:
+            batch_label = label[i*batch_size:(i+1)*batch_size]
+            loss += mnn.loss_fun(y,batch_label)
+    loss = loss/inner_size
+    acc  = acc/inner_size
+    return acc ,loss
+
+'''
 training function
 '''
 def training_fun(data,label,y_data,filter1,filter2,w1,w2):
@@ -186,20 +219,9 @@ def training_fun(data,label,y_data,filter1,filter2,w1,w2):
             filter2 = filter2 - filter2_rate/(((i*inner_size*2+1))**0.5)/batch_size*def2
             filter1 = filter1 - filter1_rate/(((i*inner_size*2+1))**0.5)/batch_size*def1
             print("epochs = %0d,batch cycle = %0d" %(i,j))
-        ax2,ax3,ax4,ax5,az1,az2,az3,az4,az5,ay = recognition_fun(data,filter1,filter2,w1,w2)
-        loss = mnn.loss_fun(ay,label)
-        acc = mnn.test_fun(data,y_data,az5)
+        acc,loss = loss_and_acc_fun(data,label,y_data,filter1,filter2,w1,w2,batch_size,1)
         print(i+1,loss,acc)
     return filter1,filter2,w1,w2
-
-'''
-test function
-'''
-def test_fun(x_test,y_test,filter1,filter2,w1,w2):
-    tax2,tax3,tax4,tax5,taz1,taz2,taz3,taz4,taz5 = output_layer(x_test,filter1,filter2,w1,w2)
-    acc = mnn.test_fun(x_test,y_test,taz5)
-    print(acc)
-
 
 '''
 main funciton
@@ -221,11 +243,12 @@ def run():
     for i in range(y_train.shape[0]):
         label[i,y_train[i]]=1
     
-    x_data = x_train[0:batch_size*20]
-    l_data = label[0:batch_size*20]
-    y_data = y_train[0:batch_size*20]
+    x_data = x_train[0:batch_size*200]
+    l_data = label[0:batch_size*200]
+    y_data = y_train[0:batch_size*200]
     filter1,filter2,w1,w2 = training_fun(x_data,l_data,y_data,filter1,filter2,w1,w2)
-    test_fun(x_test[0:1000],y_test[0:1000],filter1,filter2,w1,w2)
+    acc,loss = loss_and_acc_fun(x_test[0:5000],label[0:5000],y_test[0:5000],filter1,filter2,w1,w2,batch_size,0)
+    print(acc)
     e_time = int(time.time())
     print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
 
