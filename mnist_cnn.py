@@ -9,7 +9,7 @@ import skimage.measure
 global value
 '''
 batch_size = 128
-epochs = 4
+epochs = 10
 filter1_rate =0.1
 filter2_rate =0.08
 hide1_rate   =0.05
@@ -138,6 +138,19 @@ def flatten_fun(x):
     return x
 
 '''
+Dropout function
+input x and dropout value
+output after dropout
+'''
+def dropout_fun(x,value):
+    z = np.random.random(x.shape)
+    z[z>value]=1
+    z[z<=value]=0
+    x =x*z
+    return x
+
+
+'''
 output layer function
 input x.shape(num,784)
 input filter1.shape(filter1_size,3,3)
@@ -244,11 +257,14 @@ def run():
     for i in range(y_train.shape[0]):
         label[i,y_train[i]]=1
     
-    x_data = x_train[0:batch_size*200]
-    l_data = label[0:batch_size*200]
-    y_data = y_train[0:batch_size*200]
+    #x_data = x_train[0:batch_size*200]
+    #l_data = label[0:batch_size*200]
+    #y_data = y_train[0:batch_size*200]
+    x_data = x_train
+    l_data = label
+    y_data = y_train
     filter1,filter2,w1,w2 = training_fun(x_data,l_data,y_data,filter1,filter2,w1,w2)
-    acc,loss = loss_and_acc_fun(x_test[0:5000],label[0:5000],y_test[0:5000],filter1,filter2,w1,w2,batch_size,0)
+    acc,loss = loss_and_acc_fun(x_test,label,y_test,filter1,filter2,w1,w2,100,0)
     print(acc)
     e_time = int(time.time())
     print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
