@@ -21,6 +21,7 @@ hide2_num = 64
 def rot_fun(x):  
     z = x.reshape((x.shape[0]*x.shape[1]))[::-1].reshape((x.shape[0],x.shape[1]))
     return z
+    #return x
 
 '''
 use convolve2d to achieve forword convolve3d funcition
@@ -75,9 +76,11 @@ def output_layer(x,filter1,fb1,filter2,fb2,w1,b1,w2,b2):
     x3 = mnn.relu_fun(z2)
     z3 = max_pool_fun(x3)
     x4 = flatten_fun(z3)
-    z4 = np.dot(x4,w1)+b1
+    #z4 = np.dot(x4,w1)+b1
+    z4 = np.dot(x4,w1)
     x5 = mnn.relu_fun(z4)
-    z5 = np.dot(x5,w2)+b2
+    #z5 = np.dot(x5,w2)+b2
+    z5 = np.dot(x5,w2)
     return x2,x3,x4,x5,z1,z2,z3,z4,z5
 
 '''
@@ -97,12 +100,15 @@ def get_para(params):
         if param :
             new_paras.append(param)
     arrs = np.array(new_paras)
+    #filter1 =arrs[0][0]
+    #print(filter1.shape)
     filter1 = np.zeros((filter1_size,1,3,3))
     for i in range (filter1_size):
         for j in range(1):
             filter1[i,j] = arrs[0][0][:,:,j,i]
     filter1 = filter1.reshape(filter1_size,3,3) 
     fb1 = arrs[0][1]
+    #filter2 = arrs[1][0]
     filter2 = np.zeros((filter2_size,filter1_size,3,3))
     for i in range (filter2_size):
         for j in range(filter1_size):

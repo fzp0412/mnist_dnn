@@ -28,7 +28,7 @@ img_rows, img_cols = 28, 28
 
 # the data, shuffled and split between train and test sets
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
+print(K.image_data_format())
 if K.image_data_format() == 'channels_first':
     x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
     x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
@@ -99,8 +99,6 @@ score = modela.evaluate(x_test, y_test, verbose=0)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 
-print(len(modela.layers))
-layer_count=len(modela.layers)
 parameter=[]
 for i,layer in enumerate(modela.layers):
     parameter.append((layer.get_weights()))
