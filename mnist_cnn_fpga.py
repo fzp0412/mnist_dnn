@@ -14,6 +14,9 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 import h5py
 from keras.models import model_from_json 
+import numpy as np
+
+np.set_printoptions(threshold=np.inf)
 
 
 batch_size = 128
@@ -54,10 +57,10 @@ model.add(Conv2D(4, kernel_size=(3, 3),
                  input_shape=input_shape))
 model.add(Conv2D(8, (3, 3), activation='relu'))
 model.add(MaxPooling2D(pool_size=(3, 3)))
-model.add(Dropout(0.25))
+#model.add(Dropout(0.25))
 model.add(Flatten())
 model.add(Dense(64, activation='relu'))
-model.add(Dropout(0.5))
+#model.add(Dropout(0.5))
 model.add(Dense(num_classes, activation='softmax'))
 
 model.compile(loss=keras.losses.categorical_crossentropy,
@@ -74,13 +77,13 @@ print('Test loss:', score[0])
 print('Test accuracy:', score[1])
 model.summary()
 
-'''
-print(len(model.layers))
-layer_count=len(model.layers)
-for i,layer in enumerate(model.layers):
-    print('layer:',i+1)
-    print((layer.get_weights()))
-'''
+#
+#print(len(model.layers))
+#layer_count=len(model.layers)
+#for i,layer in enumerate(model.layers):
+#    print('layer:',i+1)
+#    print((layer.get_weights()))
+#
 
 json_string = model.to_json()
 open('my_model_architecture.json','w').write(json_string)    
@@ -95,3 +98,15 @@ modela.compile(loss=keras.losses.categorical_crossentropy,
 score = modela.evaluate(x_test, y_test, verbose=0)
 print('Test loss:', score[0])
 print('Test accuracy:', score[1])
+
+print(len(modela.layers))
+layer_count=len(modela.layers)
+parameter=[]
+for i,layer in enumerate(modela.layers):
+    parameter.append((layer.get_weights()))
+    
+txt = "parameter = "+str(parameter)
+with open('parameter.py','w') as write_object:
+    write_object.write('from numpy import array,float32\n')
+    write_object.write(txt)
+
