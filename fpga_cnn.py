@@ -23,6 +23,21 @@ def rot_fun(x):
     return z
     #return x
 
+
+'''
+float16 convolve
+'''
+def convolve2d_float16(x,fil):
+    z = np.zeros((x.shape[0]-fil.shape[0]+1,x.shape[1]-fil.shape[1]+1))
+    for i in range(x.shape[0]-fil.shape[0]+1):
+        for j in range(x.shape[1]-fil.shape[1]+1):
+            for k in range(3):
+                for m in range(3):
+                    z[i][j] += x[i+k][j+m]*fil[k][m]
+    
+    return z
+
+
 '''
 use convolve2d to achieve forword convolve3d funcition
 '''
@@ -31,6 +46,7 @@ def cov3d_for_fun(x,fil,fb):
     for i in range(fil.shape[0]):
         for j in range(x.shape[0]):
             z[j][i] = signal.convolve2d(x[j],rot_fun(fil[i]),'valid')
+            #z[j][i] = convolve2d_float16(x[j],fil[i])
             z[j][i] = z[j][i]+fb[i]
     return z
 
@@ -43,6 +59,7 @@ def cov4d_for_fun(x,fil,fb):
         for j in range(x.shape[0]):
             for k in range(x.shape[1]):
                 z[j][i] += signal.convolve2d(x[j][k],rot_fun(fil[i][k]),'valid')
+                #z[j][i] += convolve2d_float16(x[j][k],fil[i][k])
             z[j][i]=z[j][i]+fb[i]
     return z
 
@@ -76,11 +93,11 @@ def output_layer(x,filter1,fb1,filter2,fb2,w1,b1,w2,b2):
     x3 = mnn.relu_fun(z2)
     z3 = max_pool_fun(x3)
     x4 = flatten_fun(z3)
-    #z4 = np.dot(x4,w1)+b1
-    z4 = np.dot(x4,w1)
+    z4 = np.dot(x4,w1)+b1
+    #z4 = np.dot(x4,w1)
     x5 = mnn.relu_fun(z4)
-    #z5 = np.dot(x5,w2)+b2
-    z5 = np.dot(x5,w2)
+    z5 = np.dot(x5,w2)+b2
+    #z5 = np.dot(x5,w2)
     return x2,x3,x4,x5,z1,z2,z3,z4,z5
 
 '''
@@ -118,6 +135,14 @@ def get_para(params):
     b1 = arrs[2][1] 
     w2 = arrs[3][0] 
     b2 = arrs[3][1]
+    #filter1 = filter1.astype('float16')
+    #filter2 = filter2.astype('float16')
+    #fb1 = fb1.astype('float16')
+    #fb2 = fb2.astype('float16')
+    #w1 = w1.astype('float16')
+    #w2 = w2.astype('float16')
+    #b1 = b1.astype('float16')
+    #b2 = b2.astype('float16')
     return filter1,fb1,filter2,fb2,w1,b1,w2,b2
 
 '''
@@ -126,8 +151,8 @@ main funciton
 def run():
     s_time = int(time.time())
     (x_train, y_train), (x_test, y_test) = mnn.load_data()
-    x_test  = x_test.astype('float32')
-    x_test = x_test/255;
+    x_test  = x_test.astype('float16')
+    x_test = x_test/255
     filter1 = np.random.randn(filter1_size,3,3)
     filter2 = np.random.randn(filter2_size,filter1_size,3,3)
     fb1 =np.random.randn(filter1_size) 
@@ -142,7 +167,6 @@ def run():
     test_fun(x_test,y_test,filter1,fb1,filter2,fb2,w1,b1,w2,b2)
     e_time = int(time.time())
     print("%02d:%02d:%02d" %((e_time-s_time)/3600,(e_time-s_time)%3600/60,(e_time-s_time)%60))
-
 
 if __name__ =='__main__':
     run()
